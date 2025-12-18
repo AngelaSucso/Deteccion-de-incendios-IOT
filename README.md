@@ -9,7 +9,9 @@
    - Se detecta el riesgo de incendio.
    - Se analiza la humedad ambiental.
    - Se captura una imagen desde la cámara IP.
-   ![Ip Webcam](images/ipwebcam.jpeg)
+
+     <img src="images/ipwebcam.jpeg" width="400">
+
    - Se graba un archivo de audio.
 5. El sistema evita alertas repetidas hasta que las condiciones vuelvan a la normalidad.
 
