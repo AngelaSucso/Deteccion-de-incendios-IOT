@@ -20,14 +20,23 @@
         h1 { font-size: 1.8em; margin-bottom: 5px; }
         header p { font-size: 0.9em; opacity: 0.7; }
         .alert-panel {
-            background: linear-gradient(135deg, #ff4757, #ff6b81);
             padding: 15px;
             border-radius: 10px;
             margin-bottom: 15px;
-            display: none;
+            display: block;
             animation: pulse 1s infinite;
+            background: linear-gradient(135deg, #2ecc71, #27ae60); /* verde por defecto */
+            color: #fff;
+            transition: background 0.5s;
         }
-        .alert-panel.active { display: block; }
+        .alert-panel.riesgo {
+            background: linear-gradient(135deg, #f1c40f, #f39c12); /* amarillo */
+            color: #222;
+        }
+        .alert-panel.incendio {
+            background: linear-gradient(135deg, #ff4757, #ff6b81); /* rojo */
+            color: #fff;
+        }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.8; } }
         .alert-title { font-size: 1.2em; font-weight: bold; margin-bottom: 8px; }
         .alert-list { list-style: none; font-size: 0.9em; }
@@ -166,7 +175,7 @@
         </div>
         <!-- Panel de Alerta siempre al final -->
         <div class="alert-panel" id="alertPanel">
-            <div class="alert-title" id="alertTitle">⚠️ POSIBLE INCENDIO</div>
+            <div class="alert-title" id="alertTitle">✅ Todo normal</div>
             <ul class="alert-list" id="alertList"></ul>
         </div>
     </div>
@@ -203,7 +212,23 @@
             } catch(e) {}
         }
         
+
+        // Estado global
+        let estadoActual = 'normal';
+
         socket.on('datos_sensores', (data) => { actualizarUI(data); });
+        socket.on('estado', (data) => {
+            if (data && data.estado) {
+                actualizarPanelEstado(data.estado);
+            }
+        });
+
+        // Al cargar, pedir el último estado
+        fetch(API_URL + '/ultimos').then(r => r.json()).then(res => {
+            if (res && res.estado && res.estado.estado) {
+                actualizarPanelEstado(res.estado.estado);
+            }
+        });
         
         // Variables para el visualizador de audio
         let audioContext = null;
@@ -308,6 +333,7 @@
         }
         
         function actualizarUI(data) {
+            // Actualiza solo los datos y gráficos de sensores
             const tiempo = new Date(data.timestamp).toLocaleTimeString('es-ES');
             document.getElementById('tempValue').textContent = data.temperatura.toFixed(1);
             document.getElementById('tempTime').textContent = tiempo;
@@ -315,21 +341,55 @@
             document.getElementById('humTime').textContent = tiempo;
             document.getElementById('lumValue').textContent = Math.round(data.luminosidad);
             document.getElementById('lumTime').textContent = tiempo;
-            
+
             datosTemp.push(data.temperatura);
             datosHum.push(data.humedad);
             datosLum.push(data.luminosidad);
             etiquetas.push(tiempo);
-            
+
             if (datosTemp.length > MAX_PUNTOS) { datosTemp.shift(); datosHum.shift(); datosLum.shift(); etiquetas.shift(); }
-            
+
             chartTemp.update('none');
             chartHum.update('none');
             chartLum.update('none');
-            
+
             verificarAlertas(data.temperatura, data.humedad, data.luminosidad);
+            // No actualiza el panel de estado ni la evidencia
         }
+                socket.on('estado', (data) => {
+                    // Solo actualiza el panel de estado
+                    if (data && data.estado) {
+                        actualizarPanelEstado(data.estado);
+                    }
+                });
+                socket.on('alerta_captura', (data) => {
+                    // Solo actualiza la evidencia (imagen/audio)
+                    console.log('🚨 Captura de alerta recibida:', data);
+                    const section = document.getElementById('evidenciaSection');
+                    const tiempo = document.getElementById('evidenciaTime');
+
+                    tiempo.textContent = new Date(data.timestamp).toLocaleTimeString('es-ES');
+
+                    // Imagen
+                    if (data.imagen && data.imagen.data_url) {
+                        document.getElementById('evidenciaImg').src = data.imagen.data_url;
+                        document.getElementById('evidenciaImgNombre').textContent = '📁 ' + data.imagen.nombre;
+                    }
+
+                    // Audio
+                    if (data.audio && data.audio.data_url) {
+                        const audioElement = document.getElementById('evidenciaAudio');
+                        audioElement.src = data.audio.data_url;
+                        document.getElementById('evidenciaAudioNombre').textContent = '🎵 ' + data.audio.nombre;
+
+                        // Configurar visualizador de audio
+                        setupAudioVisualizer(audioElement);
+                    }
+
+                    section.classList.add('active');
+                });
         
+
         function verificarAlertas(temp, hum, lum) {
             const alertas = [];
             if (temp >= UMBRALES.temperatura.max) { alertas.push('🌡️ Temp ALTA: ' + temp.toFixed(1) + '°C'); setEstado('temp', 'danger', '¡PELIGRO!'); document.getElementById('cardTemp').classList.add('alerta'); }
@@ -338,25 +398,26 @@
             else { setEstado('hum', 'normal', 'Normal'); document.getElementById('cardHum').classList.remove('alerta'); }
             if (lum >= UMBRALES.luminosidad.max) { alertas.push('💡 Luz ALTA: ' + Math.round(lum) + ' Lux'); setEstado('lum', 'danger', '¡PELIGRO!'); document.getElementById('cardLum').classList.add('alerta'); }
             else { setEstado('lum', 'normal', 'Normal'); document.getElementById('cardLum').classList.remove('alerta'); }
-            
+            document.getElementById('alertList').innerHTML = alertas.map(a => '<li>' + a + '</li>').join('');
+        }
+
+        function actualizarPanelEstado(estado) {
             const panel = document.getElementById('alertPanel');
             const titulo = document.getElementById('alertTitle');
-            
-            if (alertas.length > 0) {
-                panel.classList.add('active');
-                
-                // Cambiar título según cantidad de alertas
-                if (alertas.length >= 3) {
-                    titulo.textContent = '🔥 ¡ALERTA DE INCENDIO!';
-                    titulo.style.fontSize = '1.4em';
-                } else {
-                    titulo.textContent = '⚠️ POSIBLE INCENDIO';
-                    titulo.style.fontSize = '1.2em';
-                }
-                
-                document.getElementById('alertList').innerHTML = alertas.map(a => '<li>' + a + '</li>').join('');
+            estadoActual = estado;
+            panel.classList.remove('riesgo', 'incendio');
+            if (estado === 'normal') {
+                titulo.textContent = '✅ Todo normal';
+                panel.style.fontSize = '1.1em';
+            } else if (estado === 'riesgo') {
+                titulo.textContent = '⚠️ ¡Riesgo de incendio!';
+                panel.classList.add('riesgo');
+                panel.style.fontSize = '1.2em';
+            } else if (estado === 'incendio confirmado') {
+                titulo.textContent = '🔥 Incendio confirmado';
+                panel.classList.add('incendio');
+                panel.style.fontSize = '1.4em';
             }
-            else { panel.classList.remove('active'); }
         }
         
         function setEstado(s, e, t) { const el = document.getElementById(s + 'Status'); el.className = 'sensor-status status-' + e; el.textContent = t; }
