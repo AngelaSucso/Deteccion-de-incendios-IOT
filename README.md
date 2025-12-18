@@ -1,2 +1,2 @@
 # Deteccion-de-incendios-IOT
-Hello by Evelyn
+Hello by Team 3 - LAB A
