@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard IoT - Detector de Incendios</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 15px;
+            color: white;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        header { text-align: center; margin-bottom: 20px; }
+        h1 { font-size: 1.8em; margin-bottom: 5px; }
+        header p { font-size: 0.9em; opacity: 0.7; }
+        .alert-panel {
+            background: linear-gradient(135deg, #ff4757, #ff6b81);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            display: none;
+            animation: pulse 1s infinite;
+        }
+        .alert-panel.active { display: block; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.8; } }
+        .alert-title { font-size: 1.2em; font-weight: bold; margin-bottom: 8px; }
+        .alert-list { list-style: none; font-size: 0.9em; }
+        .alert-list li { padding: 3px 0; }
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .sensor-card {
+            background: linear-gradient(135deg, #2d3436, #636e72);
+            border-radius: 12px;
+            padding: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+        .sensor-card.alerta {
+            background: linear-gradient(135deg, #c0392b, #e74c3c);
+            animation: cardPulse 1s infinite;
+        }
+        @keyframes cardPulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(255,71,87,0.5); }
+            50% { box-shadow: 0 0 30px rgba(255,71,87,0.8); }
+        }
+        .sensor-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+        .sensor-name { font-size: 0.75em; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; }
+        .sensor-icon { font-size: 1.5em; }
+        .sensor-value-row { display: flex; align-items: baseline; gap: 5px; }
+        .sensor-value { font-size: 2.5em; font-weight: bold; line-height: 1; }
+        .sensor-unit { font-size: 1em; opacity: 0.7; }
+        .sensor-status { font-size: 0.65em; padding: 2px 8px; border-radius: 10px; display: inline-block; margin: 5px 0; }
+        .status-normal { background: rgba(46, 204, 113, 0.3); color: #2ecc71; }
+        .status-warning { background: rgba(241, 196, 15, 0.3); color: #f1c40f; }
+        .status-danger { background: rgba(231, 76, 60, 0.3); color: #e74c3c; }
+        .sensor-time { font-size: 0.6em; opacity: 0.5; }
+        .temperatura .sensor-value { color: #ff6b6b; }
+        .humedad .sensor-value { color: #74b9ff; }
+        .luminosidad .sensor-value { color: #ffeaa7; }
+        .charts-section { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
+        .chart-card { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 15px; }
+        .chart-card h4 { font-size: 0.85em; margin-bottom: 10px; opacity: 0.9; }
+        .chart-container { position: relative; height: 180px; }
+        .umbrales-info { background: rgba(255,255,255,0.05); border-radius: 8px; padding: 10px 15px; margin-bottom: 15px; font-size: 0.75em; display: flex; justify-content: space-around; flex-wrap: wrap; gap: 10px; }
+        .umbral-item { text-align: center; }
+        .umbral-label { opacity: 0.6; display: block; }
+        .umbral-value { font-weight: bold; font-size: 1.2em; }
+        /* Sección de evidencia de alerta (imagen + audio) */
+        .evidencia-section {
+            background: linear-gradient(135deg, #c0392b, #e74c3c);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: none;
+            animation: imagenPulse 2s infinite;
+        }
+        .evidencia-section.active { display: block; }
+        @keyframes imagenPulse { 0%, 100% { box-shadow: 0 0 20px rgba(255,71,87,0.5); } 50% { box-shadow: 0 0 40px rgba(255,71,87,0.8); } }
+        .evidencia-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .evidencia-title { font-size: 1.1em; font-weight: bold; }
+        .evidencia-time { font-size: 0.75em; opacity: 0.8; }
+        .evidencia-content { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 900px) { .evidencia-content { grid-template-columns: 1fr; } }
+        
+        /* Imagen */
+        .evidencia-imagen { text-align: center; }
+        .evidencia-imagen img { max-width: 100%; max-height: 300px; border-radius: 8px; border: 3px solid rgba(255,255,255,0.3); }
+        .evidencia-nombre { font-size: 0.75em; opacity: 0.7; margin-top: 8px; }
+        
+        /* Audio */
+        .evidencia-audio { background: rgba(0,0,0,0.2); border-radius: 8px; padding: 15px; }
+        .audio-titulo { font-size: 0.9em; margin-bottom: 10px; font-weight: bold; }
+        .audio-player { width: 100%; margin-bottom: 10px; }
+        .audio-visualizer { width: 100%; height: 80px; background: rgba(0,0,0,0.3); border-radius: 6px; }
+        
+        @media (max-width: 900px) { .dashboard { grid-template-columns: 1fr; } .charts-section { grid-template-columns: 1fr; } .sensor-value { font-size: 2em; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔥 Dashboard IoT - Detector de Incendios</h1>
+            <p>Monitoreo en tiempo real (actualización por segundo)</p>
+        </header>
+        <div class="umbrales-info">
+            <div class="umbral-item"><span class="umbral-label">🌡️ Temp Máx</span><span class="umbral-value" id="umbralTemp">--</span>°C</div>
+            <div class="umbral-item"><span class="umbral-label">💧 Hum Mín</span><span class="umbral-value" id="umbralHum">--</span>%</div>
+            <div class="umbral-item"><span class="umbral-label">💡 Lum Máx</span><span class="umbral-value" id="umbralLum">--</span> Lux</div>
+        </div>
+        <div class="dashboard">
+            <div class="sensor-card temperatura" id="cardTemp">
+                <div class="sensor-header"><span class="sensor-name">Temperatura</span><span class="sensor-icon">🌡️</span></div>
+                <div class="sensor-value-row"><span class="sensor-value" id="tempValue">--</span><span class="sensor-unit">°C</span></div>
+                <span class="sensor-status status-normal" id="tempStatus">Normal</span>
+                <div class="sensor-time" id="tempTime">--:--:--</div>
+            </div>
+            <div class="sensor-card humedad" id="cardHum">
+                <div class="sensor-header"><span class="sensor-name">Humedad</span><span class="sensor-icon">💧</span></div>
+                <div class="sensor-value-row"><span class="sensor-value" id="humValue">--</span><span class="sensor-unit">%</span></div>
+                <span class="sensor-status status-normal" id="humStatus">Normal</span>
+                <div class="sensor-time" id="humTime">--:--:--</div>
+            </div>
+            <div class="sensor-card luminosidad" id="cardLum">
+                <div class="sensor-header"><span class="sensor-name">Luminosidad</span><span class="sensor-icon">💡</span></div>
+                <div class="sensor-value-row"><span class="sensor-value" id="lumValue">--</span><span class="sensor-unit">Lux</span></div>
+                <span class="sensor-status status-normal" id="lumStatus">Normal</span>
+                <div class="sensor-time" id="lumTime">--:--:--</div>
+            </div>
+        </div>
+        <div class="charts-section">
+            <div class="chart-card"><h4>🌡️ Temperatura (60s)</h4><div class="chart-container"><canvas id="chartTemp"></canvas></div></div>
+            <div class="chart-card"><h4>💧 Humedad (60s)</h4><div class="chart-container"><canvas id="chartHum"></canvas></div></div>
+            <div class="chart-card"><h4>💡 Luminosidad (60s)</h4><div class="chart-container"><canvas id="chartLum"></canvas></div></div>
+        </div>
+        <!-- Sección de Evidencia (Imagen + Audio) -->
+        <div class="evidencia-section" id="evidenciaSection">
+            <div class="evidencia-header">
+                <span class="evidencia-title">🚨 Evidencia de Alerta de Incendio</span>
+                <span class="evidencia-time" id="evidenciaTime">--:--:--</span>
+            </div>
+            <div class="evidencia-content">
+                <!-- Imagen -->
+                <div class="evidencia-imagen">
+                    <h4>📷 Captura de Cámara</h4>
+                    <img id="evidenciaImg" src="" alt="Imagen de alerta">
+                    <p class="evidencia-nombre" id="evidenciaImgNombre"></p>
+                </div>
+                <!-- Audio -->
+                <div class="evidencia-audio">
+                    <h4 class="audio-titulo">🎤 Captura de Audio</h4>
+                    <audio id="evidenciaAudio" class="audio-player" controls></audio>
+                    <p class="evidencia-nombre" id="evidenciaAudioNombre"></p>
+                    <canvas id="audioVisualizer" class="audio-visualizer"></canvas>
+                </div>
+            </div>
+        </div>
+        <!-- Panel de Alerta siempre al final -->
+        <div class="alert-panel" id="alertPanel">
+            <div class="alert-title" id="alertTitle">⚠️ POSIBLE INCENDIO</div>
+            <ul class="alert-list" id="alertList"></ul>
+        </div>
+    </div>
+    <script>
+        const API_URL = 'http://localhost:5001/api';
+        const socket = io('http://localhost:5001');
+        let UMBRALES = { temperatura: {max:35}, humedad: {min:30}, luminosidad: {max:900} };
+        const MAX_PUNTOS = 60;
+        let datosTemp = [], datosHum = [], datosLum = [], etiquetas = [];
+        const chartConfig = {
+            type: 'line',
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                animation: { duration: 0 },
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { display: true, ticks: { color: 'rgba(255,255,255,0.5)', maxRotation: 45, font: { size: 9 }, maxTicksLimit: 10 }, grid: { color: 'rgba(255,255,255,0.1)' } },
+                    y: { display: true, ticks: { color: 'rgba(255,255,255,0.7)', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.1)' } }
+                },
+                elements: { point: { radius: 0 }, line: { tension: 0.3 } }
+            }
+        };
+        const chartTemp = new Chart(document.getElementById('chartTemp'), { ...chartConfig, data: { labels: etiquetas, datasets: [{ data: datosTemp, borderColor: '#ff6b6b', backgroundColor: 'rgba(255,107,107,0.2)', fill: true, borderWidth: 2 }] } });
+        const chartHum = new Chart(document.getElementById('chartHum'), { ...chartConfig, data: { labels: etiquetas, datasets: [{ data: datosHum, borderColor: '#74b9ff', backgroundColor: 'rgba(116,185,255,0.2)', fill: true, borderWidth: 2 }] } });
+        const chartLum = new Chart(document.getElementById('chartLum'), { ...chartConfig, data: { labels: etiquetas, datasets: [{ data: datosLum, borderColor: '#ffeaa7', backgroundColor: 'rgba(255,234,167,0.2)', fill: true, borderWidth: 2 }] } });
+        
+        async function cargarUmbrales() {
+            try {
+                const res = await fetch(API_URL + '/umbrales');
+                UMBRALES = await res.json();
+                document.getElementById('umbralTemp').textContent = UMBRALES.temperatura.max;
+                document.getElementById('umbralHum').textContent = UMBRALES.humedad.min;
+                document.getElementById('umbralLum').textContent = UMBRALES.luminosidad.max;
+            } catch(e) {}
+        }
+        
+        socket.on('datos_sensores', (data) => { actualizarUI(data); });
+        
+        // Variables para el visualizador de audio
+        let audioContext = null;
+        let analyser = null;
+        let dataArray = null;
+        let animationId = null;
+        
+        // Recibir imagen y audio de alerta
+        socket.on('alerta_captura', (data) => {
+            console.log('🚨 Captura de alerta recibida:', data);
+            const section = document.getElementById('evidenciaSection');
+            const tiempo = document.getElementById('evidenciaTime');
+            
+            tiempo.textContent = new Date(data.timestamp).toLocaleTimeString('es-ES');
+            
+            // Imagen
+            if (data.imagen && data.imagen.data_url) {
+                document.getElementById('evidenciaImg').src = data.imagen.data_url;
+                document.getElementById('evidenciaImgNombre').textContent = '📁 ' + data.imagen.nombre;
+            }
+            
+            // Audio
+            if (data.audio && data.audio.data_url) {
+                const audioElement = document.getElementById('evidenciaAudio');
+                audioElement.src = data.audio.data_url;
+                document.getElementById('evidenciaAudioNombre').textContent = '🎵 ' + data.audio.nombre;
+                
+                // Configurar visualizador de audio
+                setupAudioVisualizer(audioElement);
+            }
+            
+            section.classList.add('active');
+        });
+        
+        // Configurar visualizador de ondas de audio
+        function setupAudioVisualizer(audioElement) {
+            const canvas = document.getElementById('audioVisualizer');
+            const ctx = canvas.getContext('2d');
+            
+            // Crear contexto de audio si no existe
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            
+            // Limpiar animación anterior
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+            
+            // Crear analizador
+            analyser = audioContext.createAnalyser();
+            analyser.fftSize = 256;
+            const bufferLength = analyser.frequencyBinCount;
+            dataArray = new Uint8Array(bufferLength);
+            
+            // Conectar audio al analizador
+            const source = audioContext.createMediaElementSource(audioElement);
+            source.connect(analyser);
+            analyser.connect(audioContext.destination);
+            
+            // Dibujar visualización
+            function draw() {
+                animationId = requestAnimationFrame(draw);
+                
+                analyser.getByteFrequencyData(dataArray);
+                
+                // Ajustar tamaño del canvas
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+                
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                const barWidth = (canvas.width / bufferLength) * 2.5;
+                let x = 0;
+                
+                for (let i = 0; i < bufferLength; i++) {
+                    const barHeight = (dataArray[i] / 255) * canvas.height;
+                    
+                    // Gradiente de color según intensidad
+                    const hue = (dataArray[i] / 255) * 60; // Rojo a amarillo
+                    ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
+                    
+                    ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+                    x += barWidth + 1;
+                }
+            }
+            
+            // Iniciar cuando se reproduzca
+            audioElement.onplay = () => {
+                if (audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+                draw();
+            };
+            
+            audioElement.onpause = () => {
+                if (animationId) {
+                    cancelAnimationFrame(animationId);
+                }
+            };
+        }
+        
+        function actualizarUI(data) {
+            const tiempo = new Date(data.timestamp).toLocaleTimeString('es-ES');
+            document.getElementById('tempValue').textContent = data.temperatura.toFixed(1);
+            document.getElementById('tempTime').textContent = tiempo;
+            document.getElementById('humValue').textContent = data.humedad.toFixed(1);
+            document.getElementById('humTime').textContent = tiempo;
+            document.getElementById('lumValue').textContent = Math.round(data.luminosidad);
+            document.getElementById('lumTime').textContent = tiempo;
+            
+            datosTemp.push(data.temperatura);
+            datosHum.push(data.humedad);
+            datosLum.push(data.luminosidad);
+            etiquetas.push(tiempo);
+            
+            if (datosTemp.length > MAX_PUNTOS) { datosTemp.shift(); datosHum.shift(); datosLum.shift(); etiquetas.shift(); }
+            
+            chartTemp.update('none');
+            chartHum.update('none');
+            chartLum.update('none');
+            
+            verificarAlertas(data.temperatura, data.humedad, data.luminosidad);
+        }
+        
+        function verificarAlertas(temp, hum, lum) {
+            const alertas = [];
+            if (temp >= UMBRALES.temperatura.max) { alertas.push('🌡️ Temp ALTA: ' + temp.toFixed(1) + '°C'); setEstado('temp', 'danger', '¡PELIGRO!'); document.getElementById('cardTemp').classList.add('alerta'); }
+            else { setEstado('temp', 'normal', 'Normal'); document.getElementById('cardTemp').classList.remove('alerta'); }
+            if (hum <= UMBRALES.humedad.min) { alertas.push('💧 Hum BAJA: ' + hum.toFixed(1) + '%'); setEstado('hum', 'danger', '¡PELIGRO!'); document.getElementById('cardHum').classList.add('alerta'); }
+            else { setEstado('hum', 'normal', 'Normal'); document.getElementById('cardHum').classList.remove('alerta'); }
+            if (lum >= UMBRALES.luminosidad.max) { alertas.push('💡 Luz ALTA: ' + Math.round(lum) + ' Lux'); setEstado('lum', 'danger', '¡PELIGRO!'); document.getElementById('cardLum').classList.add('alerta'); }
+            else { setEstado('lum', 'normal', 'Normal'); document.getElementById('cardLum').classList.remove('alerta'); }
+            
+            const panel = document.getElementById('alertPanel');
+            const titulo = document.getElementById('alertTitle');
+            
+            if (alertas.length > 0) {
+                panel.classList.add('active');
+                
+                // Cambiar título según cantidad de alertas
+                if (alertas.length >= 3) {
+                    titulo.textContent = '🔥 ¡ALERTA DE INCENDIO!';
+                    titulo.style.fontSize = '1.4em';
+                } else {
+                    titulo.textContent = '⚠️ POSIBLE INCENDIO';
+                    titulo.style.fontSize = '1.2em';
+                }
+                
+                document.getElementById('alertList').innerHTML = alertas.map(a => '<li>' + a + '</li>').join('');
+            }
+            else { panel.classList.remove('active'); }
+        }
+        
+        function setEstado(s, e, t) { const el = document.getElementById(s + 'Status'); el.className = 'sensor-status status-' + e; el.textContent = t; }
+        
+        window.onload = () => { cargarUmbrales(); };
+    </script>
+</body>
+</html>
