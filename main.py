@@ -3,6 +3,9 @@ import time
 import requests
 import paho.mqtt.client as mqtt
 
+from DeteccionAudio.detector_audio_incendio import detectar_incendio
+from DeteccionImagen.detector import detect_fire
+from telegram_message import enviar_alerta_telegram
 # ================== CONFIGURACIÓN ==================
 BROKER = "test.mosquitto.org"
 TOPIC = "incendio/sensores"
@@ -25,6 +28,11 @@ estado_local = "Normal"
 contador_riesgo = 0
 contador_normal = 0
 evidencia_tomada = False
+
+#=================== UMBRAL DE DESICION==============
+PESO_IMAGEN = 0.7
+PESO_AUDIO = 0.3
+UMBRAL_ALERTA = 0.6
 
 # ================== FUNCIONES ==================
 
@@ -50,6 +58,24 @@ def grabar_audio(duracion=5):
         print("Audio grabado")
     except Exception as e:
         print("Error grabando audio:", e)
+
+
+def decidir_alerta(prob_imagen, prob_audio):
+    score = (
+        PESO_IMAGEN * prob_imagen +
+        PESO_AUDIO * prob_audio
+    )
+    return score >= UMBRAL_ALERTA, score
+
+
+def detectar_incendio_imagen(image_path):
+    result = detect_fire(image_path)
+
+    if result is False:
+        return {"confianza": 0.0}
+    else:
+        detected, image_path, confidence = result
+        return {"confianza": confidence}
 
 # ================== MQTT ==================
 
@@ -96,6 +122,25 @@ def on_message(client, userdata, msg):
             grabar_audio(5)
             evidencia_tomada = True
 
+            # ===== DETECCIÓN POR AUDIO =====
+            resultado_audio = detectar_incendio(AUDIO_PATH)
+            prob_audio = resultado_audio["confianza"]
+
+            # ===== DETECCIÓN POR IMAGEN =====
+            resultado_imagen = detectar_incendio_imagen(PHOTO_PATH)
+            prob_imagen = resultado_imagen["confianza"]
+
+            # ===== FUSIÓN =====
+            alerta_final, score = decidir_alerta(prob_imagen, prob_audio)
+            print(f"Score final: {score:.2f}")
+
+            if alerta_final:
+                estado_local = "Confirmado"
+                print("INCENDIO CONFIRMADO")
+            else:
+                print("Evidencia insuficiente, monitoreando...")
+
+
         # Verificar recuperación
         if not condicion_riesgo:
             contador_normal += 1
@@ -109,6 +154,10 @@ def on_message(client, userdata, msg):
                 print("Estado: Entorno estabilizado..")
         else:
             contador_normal = 0
+    # ================== ESTADO CONFIRMADO ==================
+    elif estado_local == "Confirmado":
+        enviar_alerta_telegram(PHOTO_PATH)
+
 
     print(f"Estado local: {estado_local}")
     print("-" * 40)
