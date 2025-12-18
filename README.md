@@ -21,6 +21,7 @@
 El sistema espera mensajes en formato JSON con la siguiente estructura:
 
 ```json
+
 {
   "temp": 45,
   "hum": 18,
