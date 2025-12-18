@@ -1,5 +1,5 @@
 # Deteccion-de-incendios-IOT
-Hello by Evelyn
+
 
 # instalar dependencias del dashboard
 
