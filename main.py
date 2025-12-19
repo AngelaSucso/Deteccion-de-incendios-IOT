@@ -381,10 +381,12 @@ def on_message_received(topic, payload, **kwargs):
             enviar_alerta_telegram(PHOTO_PATH)
             alerta_enviada = True
             
-            # OPCIONAL: Subir a S3 e invocar Lambda
-            # evento_id = f"incendio_{int(time.time())}"
-            # foto_s3 = subir_a_s3(PHOTO_PATH, "fotos")
-            # audio_s3 = subir_a_s3(AUDIO_PATH, "audios")
+            # Subir a S3 (fotos y audios se guardan local y en S3)
+            evento_id = f"incendio_{int(time.time())}"
+            foto_s3 = subir_a_s3(PHOTO_PATH, "fotos")
+            audio_s3 = subir_a_s3(AUDIO_PATH, "audios")
+            
+            # TODO: Invocar Lambda cuando los modelos estén en la nube
             # if foto_s3 and audio_s3:
             #     invocar_lambda_analisis(foto_s3, audio_s3, evento_id)
     
