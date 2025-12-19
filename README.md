@@ -228,7 +228,7 @@ Señal de riesgo detectada (por ejemplo, temperatura o luz fuera de rango). El s
 <br>
 🔊 [audio_incendio.wav](audio_incendio.wav)
 
-Cuando se detecta riesgo, el sistema guarda una fotografía (`confirmado.jpeg`) y graba un audio (`audio_incendio.wav`) para análisis posterior.
+Cuando se detecta riesgo, el sistema guarda una fotografía (`foto_incendio.jpeg`) y graba un audio (`audio_incendio.wav`) para análisis posterior.
 
 ### 3.4 Confirmación de Incendio
 
