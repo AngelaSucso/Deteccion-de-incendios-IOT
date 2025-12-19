@@ -84,6 +84,7 @@ def on_message(client, userdata, msg):
     global estado_local
     global contador_riesgo, contador_normal
     global evidencia_tomada
+    global alerta_enviada 
 
     data = json.loads(msg.payload.decode())
 
@@ -152,6 +153,7 @@ def on_message(client, userdata, msg):
                 contador_riesgo = 0
                 contador_normal = 0
                 evidencia_tomada = False
+                alerta_enviada = False 
                 print("Estado: Entorno estabilizado..")
         else:
             contador_normal = 0
