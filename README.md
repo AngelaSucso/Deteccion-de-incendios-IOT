@@ -168,7 +168,7 @@ Señal de riesgo detectada (por ejemplo, temperatura o luz fuera de rango). El s
 
 📷 **Imagen confirmada**
 <br>
-<img src="images/confirmado.jpeg" width="400">
+<img src="images/foto_incendio.jpg" width="400">
 
 🎧 **Audio de incendio**
 <br>
@@ -178,7 +178,7 @@ Cuando se detecta riesgo, el sistema guarda una fotografía (`confirmado.jpeg`) 
 
 ### 3.4 Confirmación de Incendio
 
-     <img src="images/confirmado.jpeg" width="400">
+  <img src="images/confirmado.jpeg" width="400">
 
 Imagen anotada que confirma la presencia de fuego (cajas de detección, etiquetas y probabilidades). Tras esta etapa el sistema procede a generar y enviar alertas.
 
@@ -186,7 +186,7 @@ Imagen anotada que confirma la presencia de fuego (cajas de detección, etiqueta
   
   <img src="images/mensaje_telegram.jpeg" width="400">
 
-Notificación enviada al usuario vía Telegram con foto y mensaje informando la detección confirmada. 
+Notificación enviada al usuario vía Telegram con foto y mensaje informando la detección confirmada.
 
 
 ## 4. Hoja de Ruta
