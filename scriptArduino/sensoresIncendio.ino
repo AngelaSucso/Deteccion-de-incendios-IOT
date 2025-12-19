@@ -22,7 +22,7 @@ int   luz_valida  = 0;
 
 void setup() {
   Serial.begin(9600);
-  delay(2000);
+  delay(4000);
 
   carrier.begin();
 

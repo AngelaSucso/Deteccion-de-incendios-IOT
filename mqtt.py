@@ -33,7 +33,7 @@ aws_connection = mqtt_connection_builder.mtls_from_path(
     pri_key_filepath=PATH_TO_PRIVATE_KEY,
     ca_filepath=PATH_TO_AMAZON_ROOT_CA_1,
     client_id=CLIENT_ID,
-    clean_session=False,
+    clean_session=True,
     keep_alive_secs=30
 )
 
