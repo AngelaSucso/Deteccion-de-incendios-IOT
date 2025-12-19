@@ -68,6 +68,10 @@ La arquitectura del sistema se basa en una estructura distribuida y modular que 
 - **Flujo de Datos**: Sensores → MQTT → Backend → Detección IA → Almacenamiento/Notificaciones.
 
 Esta arquitectura permite un sistema robusto, escalable y eficiente para la prevención de incendios.
+
+  
+  <img src="images/arquitectura.jpeg" width="400">
+
 ### 1.3 Tecnologías Utilizadas
 
 - **Lenguaje**
