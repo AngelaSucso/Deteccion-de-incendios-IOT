@@ -5,7 +5,7 @@ CHAT_ID = "8532744967"
 MENSAJE = "¡Alerta! Incendio detectado 🔥"
 foto_path = "foto_incendio.jpg"
 
-def enviar_alerta_telegram(foto_path, mensaje):
+def enviar_alerta_telegram(foto_path):
     url = f"https://api.telegram.org/bot{TOKEN}/sendPhoto"
 
     with open(foto_path, "rb") as foto:

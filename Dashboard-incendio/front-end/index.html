@@ -6,6 +6,8 @@
     <title>Dashboard IoT - Detector de Incendios</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <!-- Incluir Wavesurfer.js desde un CDN -->
+    <script src="https://unpkg.com/wavesurfer.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -169,7 +171,7 @@
                     <h4 class="audio-titulo">🎤 Captura de Audio</h4>
                     <audio id="evidenciaAudio" class="audio-player" controls></audio>
                     <p class="evidencia-nombre" id="evidenciaAudioNombre"></p>
-                    <canvas id="audioVisualizer" class="audio-visualizer"></canvas>
+                    <div id="audioVisualizer" class="audio-visualizer"></div>
                 </div>
             </div>
         </div>
@@ -256,80 +258,40 @@
                 audioElement.src = data.audio.data_url;
                 document.getElementById('evidenciaAudioNombre').textContent = '🎵 ' + data.audio.nombre;
                 
-                // Configurar visualizador de audio
+                // Configurar visualizador de audio con Wavesurfer.js
                 setupAudioVisualizer(audioElement);
             }
             
             section.classList.add('active');
         });
         
-        // Configurar visualizador de ondas de audio
+        // Crear una instancia de Wavesurfer
+        let wavesurfer = null;
+
         function setupAudioVisualizer(audioElement) {
-            const canvas = document.getElementById('audioVisualizer');
-            const ctx = canvas.getContext('2d');
-            
-            // Crear contexto de audio si no existe
-            if (!audioContext) {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const container = document.getElementById('audioVisualizer');
+
+            // Destruir instancia previa si existe
+            if (wavesurfer) {
+                wavesurfer.destroy();
             }
-            
-            // Limpiar animación anterior
-            if (animationId) {
-                cancelAnimationFrame(animationId);
-            }
-            
-            // Crear analizador
-            analyser = audioContext.createAnalyser();
-            analyser.fftSize = 256;
-            const bufferLength = analyser.frequencyBinCount;
-            dataArray = new Uint8Array(bufferLength);
-            
-            // Conectar audio al analizador
-            const source = audioContext.createMediaElementSource(audioElement);
-            source.connect(analyser);
-            analyser.connect(audioContext.destination);
-            
-            // Dibujar visualización
-            function draw() {
-                animationId = requestAnimationFrame(draw);
-                
-                analyser.getByteFrequencyData(dataArray);
-                
-                // Ajustar tamaño del canvas
-                canvas.width = canvas.offsetWidth;
-                canvas.height = canvas.offsetHeight;
-                
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                
-                const barWidth = (canvas.width / bufferLength) * 2.5;
-                let x = 0;
-                
-                for (let i = 0; i < bufferLength; i++) {
-                    const barHeight = (dataArray[i] / 255) * canvas.height;
-                    
-                    // Gradiente de color según intensidad
-                    const hue = (dataArray[i] / 255) * 60; // Rojo a amarillo
-                    ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
-                    
-                    ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
-                    x += barWidth + 1;
-                }
-            }
-            
-            // Iniciar cuando se reproduzca
-            audioElement.onplay = () => {
-                if (audioContext.state === 'suspended') {
-                    audioContext.resume();
-                }
-                draw();
-            };
-            
-            audioElement.onpause = () => {
-                if (animationId) {
-                    cancelAnimationFrame(animationId);
-                }
-            };
+
+            // Crear una nueva instancia de Wavesurfer
+            wavesurfer = WaveSurfer.create({
+                container: container,
+                waveColor: 'violet',
+                progressColor: 'purple',
+                cursorColor: 'navy',
+                height: 80,
+            });
+
+            // Cargar el archivo de audio
+            wavesurfer.load(audioElement.src);
+
+            // Sincronizar reproducción con el elemento de audio
+            audioElement.onplay = () => wavesurfer.play();
+            audioElement.onpause = () => wavesurfer.pause();
+            audioElement.onseeked = () => wavesurfer.seekTo(audioElement.currentTime / audioElement.duration);
         }
         
         function actualizarUI(data) {
@@ -382,7 +344,7 @@
                         audioElement.src = data.audio.data_url;
                         document.getElementById('evidenciaAudioNombre').textContent = '🎵 ' + data.audio.nombre;
 
-                        // Configurar visualizador de audio
+                        // Configurar visualizador de audio con Wavesurfer.js
                         setupAudioVisualizer(audioElement);
                     }
 
@@ -406,14 +368,14 @@
             const titulo = document.getElementById('alertTitle');
             estadoActual = estado;
             panel.classList.remove('riesgo', 'incendio');
-            if (estado === 'normal') {
-                titulo.textContent = '✅ Todo normal';
+            if (estado === 'Normal') {
+                titulo.textContent = ' Todo normal';
                 panel.style.fontSize = '1.1em';
-            } else if (estado === 'riesgo') {
+            } else if (estado === 'Riesgo') {
                 titulo.textContent = '⚠️ ¡Riesgo de incendio!';
                 panel.classList.add('riesgo');
                 panel.style.fontSize = '1.2em';
-            } else if (estado === 'incendio confirmado') {
+            } else if (estado === 'Confirmado') {
                 titulo.textContent = '🔥 Incendio confirmado';
                 panel.classList.add('incendio');
                 panel.style.fontSize = '1.4em';

@@ -3,8 +3,14 @@ import cv2
 import os
 from datetime import datetime
 
-# Cargar modelo una sola vez
-_model = YOLO("models/yolov8s_best.pt")
+# Ruta absoluta al directorio actual (DeteccionImagen/)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Ruta absoluta al modelo
+MODEL_PATH = os.path.join(BASE_DIR, "models", "yolov8s_best.pt")
+
+# Cargar modelo UNA SOLA VEZ
+_model = YOLO(MODEL_PATH)
 
 def detect_fire(
     image_path: str,
