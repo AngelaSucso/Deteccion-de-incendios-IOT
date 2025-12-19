@@ -44,58 +44,48 @@
 ### 1.1 Descripción General del Sistema
 ### 1.2 Arquitectura del Sistema
 ### 1.3 Tecnologías Utilizadas
-  **Lenguaje de programación**
-  - **Python**: lenguaje principal del sistema, utilizado para el backend, procesamiento de datos y scripts de análisis.
 
-  **Backend y servidor**
-  - **Flask**: framework web para el servidor backend.
-  - **Flask-SocketIO**: comunicación en tiempo real con el dashboard.
-  - **Flask-CORS**: gestión de políticas CORS.
-  - **Werkzeug**: utilidades internas del servidor.
+- **Lenguaje**
+  - Python: lenguaje principal usado en backend, procesamiento y scripts.
 
-  **Frontend y visualización**
-  - **HTML / CSS**: interfaz web estática ubicada en la carpeta `front-end`.
-  - **Streamlit**: interfaz gráfica para la detección de incendios por imagen (módulo `DeteccionImagen`).
+- **Backend & servidor**
+  - Flask, Flask-SocketIO, Flask-CORS, Werkzeug
 
-  **Detección de incendios por imagen (Visión por Computadora)**
-  - **Ultralytics YOLOv8** (`ultralytics`): modelo de detección de fuego.
-  - **Modelo entrenado**: `models/yolov8s_best.pt`.
-  - **OpenCV** (`opencv-python`): procesamiento de imágenes y video.
-  - **Pillow**: carga y manipulación de imágenes.
+- **Frontend & visualización**
+  - HTML / CSS (carpeta `front-end`)
+  - Streamlit (interfaz en `DeteccionImagen`)
 
-  **Detección de incendios por audio (Aprendizaje Automático)**
-  - **Librosa**: extracción de características de audio.
-  - **NumPy**: procesamiento numérico.
-  - **scikit-learn**: modelo basado en **Random Forest** para clasificación de sonidos.
-  - Scripts ubicados en el módulo `DeteccionAudio`.
+- **Detección por imagen (Visión por Computadora)**
+  - Ultralytics YOLOv8 (`ultralytics`)
+  - Modelo entrenado: `models/yolov8s_best.pt`
+  - OpenCV (`opencv-python`), Pillow
 
-  **Análisis de datos y visualización**
-  - **pandas**: manipulación y análisis de datos.
-  - **plotly**: visualización interactiva de resultados.
+- **Detección por audio (ML)**
+  - Librosa, NumPy, scikit-learn (RandomForest)
+  - Scripts en `DeteccionAudio`
 
-  **Integración y utilidades**
-  - **python-dotenv**: gestión de variables de entorno.
-  - **python-engineio**: soporte para comunicación en tiempo real.
+- **Análisis de datos**
+  - pandas, plotly
 
-  **Telemetría y notificaciones**
-  - **Telegram Bot API**: envío de alertas automáticas al usuario.
-  - Implementación en el archivo `telegram_message.py`.
+- **Integración & utilidades**
+  - python-dotenv, python-engineio
 
-  **Soporte de audio**
-  - **soundfile** (`libsndfile`): lectura y escritura de archivos de audio.
-  - Dependencias adicionales requeridas por **librosa**.
+- **Notificaciones**
+  - Telegram Bot API (implementación en `telegram_message.py`)
 
-  **Video y fuentes externas**
-  - **pytube**: descarga de videos desde YouTube para pruebas (módulo `DeteccionImagen`).
+- **Soporte de audio**
+  - soundfile (`libsndfile`) y dependencias de `librosa`
 
-  **IoT y hardware**
-  - **Arduino MKR1010 WiFi** con **IoT Carrier**.
-  - Código del microcontrolador ubicado en `scriptArduino/sensoresIncendio.ino`.
+- **Video / fuentes externas**
+  - pytube (descarga de YouTube para pruebas)
 
-  **Estructura del proyecto**
-  - **Backend**: `backend/app.py`.
-  - **Frontend estático**: `front-end/index.html`.
-  - **Datasets**: carpetas `dataset/` y `DeteccionImagen/datasets`.
+- **IoT & hardware**
+  - Arduino MKR1010 WiFi (sketch en `scriptArduino/sensoresIncendio.ino`)
+
+- **Estructura del proyecto (referencia rápida)**
+  - Backend: `backend/app.py`
+  - Frontend estático: `front-end/index.html`
+  - Datasets: `dataset/`, `DeteccionImagen/datasets`
 
 ## 2. Primeros Pasos
 ### 2.1 Requisitos Previos
