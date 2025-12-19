@@ -31,11 +31,6 @@
         <li><a href="#35-envio-de-alertas">3.5 Envío de Alertas</a></li>
       </ol>
     </li>
-    <li><a href="#4-hoja-de-ruta">4. Hoja de Ruta</a></li>
-    <li><a href="#5-contribuciones">5. Contribuciones</a></li>
-    <li><a href="#6-licencia">6. Licencia</a></li>
-    <li><a href="#7-contacto">7. Contacto</a></li>
-    <li><a href="#8-agradecimientos">8. Agradecimientos</a></li>
   </ol>
 </details>
 
@@ -88,6 +83,16 @@
 
 - **IoT & hardware**
   - Arduino MKR1010 WiFi (sketch en `scriptArduino/sensoresIncendio.ino`)
+  - MQTT Bridge (implementación en `mqtt.py` para conectar Arduino con AWS IoT Core via Mosquitto)
+
+- **Cloud & AWS Integration**
+  - AWS IoT Core (MQTT broker para comunicación IoT)
+  - AWS S3 (almacenamiento de imágenes y videos)
+  - AWS Lambda (procesamiento serverless opcional)
+  - boto3 (SDK de AWS para Python)
+  - awsiot, awscrt (SDK de AWS IoT para Python)
+  - paho-mqtt (cliente MQTT para Mosquitto)
+  - Mosquitto MQTT Broker (puente local para sensores Arduino)
 
 - **Estructura del proyecto (referencia rápida)**
   - Backend: `backend/app.py`
@@ -104,6 +109,9 @@
 - **Arduino IDE** para programar el sketch `scriptArduino/sensoresIncendio.ino`.
 - Cámara IP o webcam para pruebas de video (si aplica).
 - Variables de entorno para integraciones (p. ej. token de Telegram).
+- **Cuenta AWS** con servicios IoT Core, S3, y Lambda activados (opcional para integración cloud).
+- **Certificados AWS IoT** descargados y colocados en la raíz del proyecto (`arduino-incendio.cert.pem`, `arduino-incendio.private.key`, `root-CA.crt`) si se usa AWS.
+- **Mosquitto MQTT Broker** (usando `test.mosquitto.org` para pruebas; opcional instalar localmente desde https://mosquitto.org/).
 
 ### 2.2 Instalación
 1. Clonar el repositorio:
@@ -131,13 +139,21 @@ pip install -r DeteccionImagen/requirements.txt
 - Windows: instalar `libsndfile`/paquetes redistribuibles según la guía de cada librería.
 - Linux/macOS: usar `apt`, `brew` o el gestor correspondiente (`libsndfile`, `ffmpeg`).
 
-5. Configurar variables de entorno (archivo `.env` recomendado). Ejemplo mínimo:
+5. Configurar variables de entorno (archivo `.env` recomendado). Ejemplo completo:
 ```
 TELEGRAM_TOKEN=xxxxx
 TELEGRAM_CHAT_ID=yyyyy
 MQTT_BROKER=broker.example.com
 MQTT_PORT=1883
+AWS_IOT_ENDPOINT=a1b9nxragudit3-ats.iot.us-east-1.amazonaws.com
+AWS_S3_BUCKET=your-incendio-bucket
+AWS_REGION=us-east-1
 ```
+
+5.5 Configurar AWS (opcional, si se usa integración cloud):
+- Crear una "Thing" en AWS IoT Console y asociar los certificados descargados.
+- Crear bucket S3 y actualizar `AWS_S3_BUCKET` en `.env`.
+- Configurar función Lambda si se desea procesamiento serverless adicional.
 
 6. Ejecutar componentes:
 - Backend / monitor (desde la raíz — si usas el script principal):
@@ -153,6 +169,10 @@ streamlit run DeteccionImagen/main.py
 python DeteccionAudio/entrenar_modelo.py
 ```
 - Subir código al Arduino: abrir `scriptArduino/sensoresIncendio.ino` en el Arduino IDE y cargar al dispositivo.
+- Puente MQTT (para conectar Arduino con AWS via Mosquitto):
+```bash
+python mqtt.py
+```
 
 7. Notas:
 - Para detección de imágenes con GPU, instala la versión de `torch` compatible con tu CUDA y reinicia.
