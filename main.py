@@ -375,6 +375,8 @@ def on_message_received(topic, payload, **kwargs):
     # ════════════════════════════════════════════
     elif estado_local == "Confirmado":
         enviar_estado("incendio confirmado")
+        enviar_imagen(PHOTO_PATH)
+        enviar_audio(AUDIO_PATH)
         
         if not alerta_enviada:
             print("\n📱 Enviando alerta Telegram...")
