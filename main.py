@@ -404,21 +404,40 @@ print("╚═══════════════════════�
 print()
 
 print("🔧 Configurando conexión a AWS IoT Core...")
+print(f"   📍 Endpoint: {ENDPOINT}")
+print(f"   🆔 Client ID: {CLIENT_ID}")
+print(f"   📜 Certificado: {PATH_TO_CERTIFICATE}")
+print(f"   🔑 Clave privada: {PATH_TO_PRIVATE_KEY}")
+print(f"   🏛 Root CA: {PATH_TO_AMAZON_ROOT_CA_1}")
 
-mqtt_connection = mqtt_connection_builder.mtls_from_path(
-    endpoint=ENDPOINT,
-    cert_filepath=PATH_TO_CERTIFICATE,
-    pri_key_filepath=PATH_TO_PRIVATE_KEY,
-    ca_filepath=PATH_TO_AMAZON_ROOT_CA_1,
-    client_id=CLIENT_ID,
-    clean_session=False,
-    keep_alive_secs=30
-)
+try:
+    mqtt_connection = mqtt_connection_builder.mtls_from_path(
+        endpoint=ENDPOINT,
+        cert_filepath=PATH_TO_CERTIFICATE,
+        pri_key_filepath=PATH_TO_PRIVATE_KEY,
+        ca_filepath=PATH_TO_AMAZON_ROOT_CA_1,
+        client_id=CLIENT_ID,
+        clean_session=False,
+        keep_alive_secs=30
+    )
 
-print("🌐 Conectando a AWS IoT Core...")
-connect_future = mqtt_connection.connect()
-connect_future.result()
-print("✅ Conectado a AWS IoT Core")
+    print("🌐 Conectando a AWS IoT Core...")
+    connect_future = mqtt_connection.connect()
+    connect_future.result()
+    print("✅ Conectado a AWS IoT Core")
+except Exception as e:
+    print(f"\n❌ ERROR DE CONEXIÓN:")
+    print(f"   {type(e).__name__}: {e}")
+    print(f"\n🔍 POSIBLES CAUSAS:")
+    print(f"   1. Certificados incorrectos o revocados")
+    print(f"   2. Política de AWS IoT sin permisos suficientes")
+    print(f"   3. Endpoint incorrecto")
+    print(f"   4. Thing no existe o no está asociado al certificado")
+    print(f"\n💡 SOLUCIÓN:")
+    print(f"   • Verifica en AWS IoT Console que el certificado esté ACTIVO")
+    print(f"   • Revisa que la política tenga permisos: iot:Connect, iot:Publish, iot:Subscribe, iot:Receive")
+    print(f"   • Confirma que el endpoint coincida con: aws iot describe-endpoint --endpoint-type iot:Data-ATS")
+    exit(1)
 
 print(f"👂 Suscribiéndose al topic: {TOPIC_SENSORES}")
 subscribe_future, packet_id = mqtt_connection.subscribe(
