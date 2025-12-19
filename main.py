@@ -157,8 +157,9 @@ def on_message(client, userdata, msg):
             contador_normal = 0
     # ================== ESTADO CONFIRMADO ==================
     elif estado_local == "Confirmado":
-        enviar_alerta_telegram(PHOTO_PATH)
-        alerta_enviada = True
+        if not alerta_enviada:
+            enviar_alerta_telegram(PHOTO_PATH)
+            alerta_enviada = True
 
 
     print(f"Estado local: {estado_local}")
