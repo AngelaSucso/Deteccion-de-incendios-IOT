@@ -44,6 +44,58 @@
 ### 1.1 Descripción General del Sistema
 ### 1.2 Arquitectura del Sistema
 ### 1.3 Tecnologías Utilizadas
+  **Lenguaje de programación**
+  - **Python**: lenguaje principal del sistema, utilizado para el backend, procesamiento de datos y scripts de análisis.
+
+  **Backend y servidor**
+  - **Flask**: framework web para el servidor backend.
+  - **Flask-SocketIO**: comunicación en tiempo real con el dashboard.
+  - **Flask-CORS**: gestión de políticas CORS.
+  - **Werkzeug**: utilidades internas del servidor.
+
+  **Frontend y visualización**
+  - **HTML / CSS**: interfaz web estática ubicada en la carpeta `front-end`.
+  - **Streamlit**: interfaz gráfica para la detección de incendios por imagen (módulo `DeteccionImagen`).
+
+  **Detección de incendios por imagen (Visión por Computadora)**
+  - **Ultralytics YOLOv8** (`ultralytics`): modelo de detección de fuego.
+  - **Modelo entrenado**: `models/yolov8s_best.pt`.
+  - **OpenCV** (`opencv-python`): procesamiento de imágenes y video.
+  - **Pillow**: carga y manipulación de imágenes.
+
+  **Detección de incendios por audio (Aprendizaje Automático)**
+  - **Librosa**: extracción de características de audio.
+  - **NumPy**: procesamiento numérico.
+  - **scikit-learn**: modelo basado en **Random Forest** para clasificación de sonidos.
+  - Scripts ubicados en el módulo `DeteccionAudio`.
+
+  **Análisis de datos y visualización**
+  - **pandas**: manipulación y análisis de datos.
+  - **plotly**: visualización interactiva de resultados.
+
+  **Integración y utilidades**
+  - **python-dotenv**: gestión de variables de entorno.
+  - **python-engineio**: soporte para comunicación en tiempo real.
+
+  **Telemetría y notificaciones**
+  - **Telegram Bot API**: envío de alertas automáticas al usuario.
+  - Implementación en el archivo `telegram_message.py`.
+
+  **Soporte de audio**
+  - **soundfile** (`libsndfile`): lectura y escritura de archivos de audio.
+  - Dependencias adicionales requeridas por **librosa**.
+
+  **Video y fuentes externas**
+  - **pytube**: descarga de videos desde YouTube para pruebas (módulo `DeteccionImagen`).
+
+  **IoT y hardware**
+  - **Arduino MKR1010 WiFi** con **IoT Carrier**.
+  - Código del microcontrolador ubicado en `scriptArduino/sensoresIncendio.ino`.
+
+  **Estructura del proyecto**
+  - **Backend**: `backend/app.py`.
+  - **Frontend estático**: `front-end/index.html`.
+  - **Datasets**: carpetas `dataset/` y `DeteccionImagen/datasets`.
 
 ## 2. Primeros Pasos
 ### 2.1 Requisitos Previos
