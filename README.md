@@ -154,13 +154,13 @@ python DeteccionAudio/entrenar_modelo.py
 ## 3. Uso del Sistema
 ### 3.1 Estado de Monitoreo Normal
  
-  <img src="images/normal.jpeg" width="400">
+  <img src="images/normal.jpeg" width="600">
 
 Estado de operación estándar con sensores dentro de los umbrales definidos. No hay alertas; el dashboard muestra señales verdes y el sistema permanece en modo monitoreo.
 
 ### 3.2 Estado de Detección de Riesgo
  
-  <img src="images/riesgo.jpeg" width="400">
+  <img src="images/riesgo.jpeg" width="600">
 
 Señal de riesgo detectada (por ejemplo, temperatura o luz fuera de rango). El sistema marca la lectura como sospechosa y prepara captura multimedia para confirmar el evento.
 
@@ -168,7 +168,7 @@ Señal de riesgo detectada (por ejemplo, temperatura o luz fuera de rango). El s
 
 📷 **Imagen confirmada**
 <br>
-<img src="images/foto_incendio.jpg" width="400">
+<img src="images/foto_incendio.jpg" width="600">
 
 🎧 **Audio de incendio**
 <br>
@@ -178,7 +178,7 @@ Cuando se detecta riesgo, el sistema guarda una fotografía (`confirmado.jpeg`) 
 
 ### 3.4 Confirmación de Incendio
 
-  <img src="images/confirmado.jpeg" width="400">
+  <img src="images/confirmado.jpeg" width="600">
 
 Imagen anotada que confirma la presencia de fuego (cajas de detección, etiquetas y probabilidades). Tras esta etapa el sistema procede a generar y enviar alertas.
 
