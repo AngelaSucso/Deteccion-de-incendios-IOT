@@ -11,6 +11,7 @@ import requests
 import base64
 import mimetypes
 import boto3
+import threading
 from datetime import datetime
 
 from DeteccionAudio.detector_audio_incendio import detectar_incendio
@@ -30,7 +31,7 @@ TOPIC_SENSORES = "sdk/test/python"
 # ════════════════════════════════════════════
 # CONFIGURACIÓN GENERAL
 # ════════════════════════════════════════════
-CAMERA_URL = "http://10.7.135.227:8080"
+CAMERA_URL = "http://10.7.134.214:8080"
 PHOTO_PATH = "foto_incendio.jpg"
 AUDIO_PATH = "audio_incendio.wav"
 
@@ -57,7 +58,7 @@ evidencia_tomada = False
 # Umbral de decisión
 PESO_IMAGEN = 0.9
 PESO_AUDIO = 0.1
-UMBRAL_ALERTA = 0.6
+UMBRAL_ALERTA = 0.55
 alerta_enviada = False
 
 # Cliente S3 (opcional, para subir a AWS)
@@ -285,9 +286,10 @@ def on_message_received(topic, payload, **kwargs):
     
     print(f"\n📊 DATOS RECIBIDOS:")
     print(f"   🌡 Temp: {temp}°C | 💧 Hum: {hum}% | 💡 Luz: {luz}")
-    
+
+
     # Enviar al dashboard
-    enviar_datos(temp, hum, luz)
+    threading.Thread(target=enviar_datos, args=(temp, hum, luz)).start()
     
     # Detectar condiciones de riesgo
     condicion_riesgo = (temp > TEMP_UMBRAL) or (luz > LUZ_UMBRAL)
@@ -328,8 +330,6 @@ def on_message_received(topic, payload, **kwargs):
             
             if foto_ok and audio_ok:
                 # Enviar al dashboard
-                enviar_imagen(PHOTO_PATH)
-                enviar_audio(AUDIO_PATH)
                 
                 # ===== ANÁLISIS CON IA =====
                 print("\n🔍 Analizando evidencia con IA...")
@@ -421,7 +421,7 @@ try:
         pri_key_filepath=PATH_TO_PRIVATE_KEY,
         ca_filepath=PATH_TO_AMAZON_ROOT_CA_1,
         client_id=CLIENT_ID,
-        clean_session=False,
+        clean_session=True,
         keep_alive_secs=30
     )
 

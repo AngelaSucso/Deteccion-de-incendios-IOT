@@ -368,14 +368,14 @@
             const titulo = document.getElementById('alertTitle');
             estadoActual = estado;
             panel.classList.remove('riesgo', 'incendio');
-            if (estado === 'Normal') {
+            if (estado === 'normal') {
                 titulo.textContent = ' Todo normal';
                 panel.style.fontSize = '1.1em';
-            } else if (estado === 'Riesgo') {
+            } else if (estado === 'riesgo') {
                 titulo.textContent = '⚠️ ¡Riesgo de incendio!';
                 panel.classList.add('riesgo');
                 panel.style.fontSize = '1.2em';
-            } else if (estado === 'Confirmado') {
+            } else if (estado === 'confirmado') {
                 titulo.textContent = '🔥 Incendio confirmado';
                 panel.classList.add('incendio');
                 panel.style.fontSize = '1.4em';
