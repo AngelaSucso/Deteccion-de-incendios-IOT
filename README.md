@@ -99,7 +99,67 @@
 
 ## 2. Primeros Pasos
 ### 2.1 Requisitos Previos
+- **Python** 3.10+ instalado.
+- **pip** y herramienta de entornos virtuales (`venv` o `virtualenv`).
+- **Git** (para clonar el repositorio).
+- **Dependencias del sistema** para audio/video: `libsndfile` (para `soundfile`/`librosa`) y `ffmpeg` (opcional, para manejo de video). En Windows puede requerirse instalar Visual C++ Build Tools.
+- **Opcional (GPU)**: drivers CUDA y versión de PyTorch compatible si se desea acelerar la detección por imagen.
+- **Arduino IDE** para programar el sketch `scriptArduino/sensoresIncendio.ino`.
+- Cámara IP o webcam para pruebas de video (si aplica).
+- Variables de entorno para integraciones (p. ej. token de Telegram).
+
 ### 2.2 Instalación
+1. Clonar el repositorio:
+```bash
+git clone <repo-url>
+cd Deteccion-de-incendios-IOT
+```
+
+2. Crear y activar un entorno virtual (Windows):
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1   # PowerShell
+# o
+.venv\Scripts\activate.bat   # CMD
+```
+
+3. Actualizar `pip` e instalar dependencias principales:
+```bash
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+pip install -r DeteccionImagen/requirements.txt
+```
+
+4. (Opcional) Instalar dependencias del sistema para audio/video:
+- Windows: instalar `libsndfile`/paquetes redistribuibles según la guía de cada librería.
+- Linux/macOS: usar `apt`, `brew` o el gestor correspondiente (`libsndfile`, `ffmpeg`).
+
+5. Configurar variables de entorno (archivo `.env` recomendado). Ejemplo mínimo:
+```
+TELEGRAM_TOKEN=xxxxx
+TELEGRAM_CHAT_ID=yyyyy
+MQTT_BROKER=broker.example.com
+MQTT_PORT=1883
+```
+
+6. Ejecutar componentes:
+- Backend / monitor (desde la raíz — si usas el script principal):
+```bash
+python main.py
+```
+- Interfaz de detección por imagen (Streamlit):
+```bash
+streamlit run DeteccionImagen/main.py
+```
+- Entrenamiento o pruebas de audio:
+```bash
+python DeteccionAudio/entrenar_modelo.py
+```
+- Subir código al Arduino: abrir `scriptArduino/sensoresIncendio.ino` en el Arduino IDE y cargar al dispositivo.
+
+7. Notas:
+- Para detección de imágenes con GPU, instala la versión de `torch` compatible con tu CUDA y reinicia.
+- Al usar IP Webcam app, actualiza la URL/credenciales en la configuración correspondiente.
 
 ## 3. Uso del Sistema
 ### 3.1 Estado de Monitoreo Normal
