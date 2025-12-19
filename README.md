@@ -31,11 +31,6 @@
         <li><a href="#35-envio-de-alertas">3.5 Envío de Alertas</a></li>
       </ol>
     </li>
-    <li><a href="#4-hoja-de-ruta">4. Hoja de Ruta</a></li>
-    <li><a href="#5-contribuciones">5. Contribuciones</a></li>
-    <li><a href="#6-licencia">6. Licencia</a></li>
-    <li><a href="#7-contacto">7. Contacto</a></li>
-    <li><a href="#8-agradecimientos">8. Agradecimientos</a></li>
   </ol>
 </details>
 
@@ -49,7 +44,34 @@
 
 ## 1. Acerca del Proyecto
 ### 1.1 Descripción General del Sistema
+
+El sistema de Detección de Incendios IoT es una plataforma avanzada diseñada para la detección temprana y automática de incendios en espacios monitoreados. Combina sensores IoT conectados a dispositivos Arduino que recopilan datos ambientales en tiempo real, como temperatura, lintensidad de luz otros indicadores de riesgo. Estos datos se procesan mediante algoritmos de inteligencia artificial especializados en visión por computadora (usando YOLOv8 para detección de fuego en imágenes) y análisis de audio. El sistema integra notificaciones instantáneas vía Telegram y almacena evidencias en la nube usando AWS S3, con procesamiento adicional posible mediante AWS Lambda. La arquitectura modular permite escalabilidad y facilidad de mantenimiento, ideal para aplicaciones en hogares, industrias o espacios públicos.
+
 ### 1.2 Arquitectura del Sistema
+
+La arquitectura del sistema se basa en una estructura distribuida y modular que integra hardware IoT, procesamiento en la nube y aplicaciones de usuario. Los componentes principales incluyen:
+
+- **Sensores y Hardware IoT**: Dispositivos Arduino MKR1010 WiFi equipados con sensores de temperatura, humo y otros, que envían datos vía MQTT a través de un broker local (Mosquitto) o directamente a AWS IoT Core.
+
+- **Puente MQTT**: Script `mqtt.py` que actúa como intermediario entre Mosquitto y AWS IoT Core, asegurando la transmisión segura de datos.
+
+- **Backend Principal**: Script `main.py` en Python que recibe los datos MQTT, coordina la detección de incendios mediante módulos especializados, y maneja el almacenamiento en AWS S3 y notificaciones.
+
+- **Módulos de Detección**:
+  - **Detección por Imagen**: Utiliza YOLOv8 para analizar imágenes capturadas y confirmar presencia de fuego.
+  - **Detección por Audio**: Emplea modelos de machine learning (RandomForest) entrenados con Librosa para procesar grabaciones de audio.
+
+- **Frontend y Visualización**: Dashboard web simple (`front-end/index.html`) para monitoreo en tiempo real, y una interfaz Streamlit (`DeteccionImagen/main.py`) para pruebas de detección por imagen.
+
+- **Notificaciones y Almacenamiento**: Integración con Telegram Bot API para alertas, y AWS S3 para guardar imágenes y videos de evidencia.
+
+- **Flujo de Datos**: Sensores → MQTT → Backend → Detección IA → Almacenamiento/Notificaciones.
+
+Esta arquitectura permite un sistema robusto, escalable y eficiente para la prevención de incendios.
+
+  
+  <img src="images/arquitectura.jpeg" width="400">
+
 ### 1.3 Tecnologías Utilizadas
 
 - **Lenguaje**
@@ -88,6 +110,16 @@
 
 - **IoT & hardware**
   - Arduino MKR1010 WiFi (sketch en `scriptArduino/sensoresIncendio.ino`)
+  - MQTT Bridge (implementación en `mqtt.py` para conectar Arduino con AWS IoT Core via Mosquitto)
+
+- **Cloud & AWS Integration**
+  - AWS IoT Core (MQTT broker para comunicación IoT)
+  - AWS S3 (almacenamiento de imágenes y videos)
+  - AWS Lambda (procesamiento serverless opcional)
+  - boto3 (SDK de AWS para Python)
+  - awsiot, awscrt (SDK de AWS IoT para Python)
+  - paho-mqtt (cliente MQTT para Mosquitto)
+  - Mosquitto MQTT Broker (puente local para sensores Arduino)
 
 - **Estructura del proyecto (referencia rápida)**
   - Backend: `backend/app.py`
@@ -104,6 +136,9 @@
 - **Arduino IDE** para programar el sketch `scriptArduino/sensoresIncendio.ino`.
 - Cámara IP o webcam para pruebas de video (si aplica).
 - Variables de entorno para integraciones (p. ej. token de Telegram).
+- **Cuenta AWS** con servicios IoT Core, S3, y Lambda activados (opcional para integración cloud).
+- **Certificados AWS IoT** descargados y colocados en la raíz del proyecto (`arduino-incendio.cert.pem`, `arduino-incendio.private.key`, `root-CA.crt`) si se usa AWS.
+- **Mosquitto MQTT Broker** (usando `test.mosquitto.org` para pruebas; opcional instalar localmente desde https://mosquitto.org/).
 
 ### 2.2 Instalación
 1. Clonar el repositorio:
@@ -131,13 +166,21 @@ pip install -r DeteccionImagen/requirements.txt
 - Windows: instalar `libsndfile`/paquetes redistribuibles según la guía de cada librería.
 - Linux/macOS: usar `apt`, `brew` o el gestor correspondiente (`libsndfile`, `ffmpeg`).
 
-5. Configurar variables de entorno (archivo `.env` recomendado). Ejemplo mínimo:
+5. Configurar variables de entorno (archivo `.env` recomendado). Ejemplo completo:
 ```
 TELEGRAM_TOKEN=xxxxx
 TELEGRAM_CHAT_ID=yyyyy
 MQTT_BROKER=broker.example.com
 MQTT_PORT=1883
+AWS_IOT_ENDPOINT=a1b9nxragudit3-ats.iot.us-east-1.amazonaws.com
+AWS_S3_BUCKET=your-incendio-bucket
+AWS_REGION=us-east-1
 ```
+
+5.5 Configurar AWS (opcional, si se usa integración cloud):
+- Crear una "Thing" en AWS IoT Console y asociar los certificados descargados.
+- Crear bucket S3 y actualizar `AWS_S3_BUCKET` en `.env`.
+- Configurar función Lambda si se desea procesamiento serverless adicional.
 
 6. Ejecutar componentes:
 - Backend / monitor (desde la raíz — si usas el script principal):
@@ -153,6 +196,10 @@ streamlit run DeteccionImagen/main.py
 python DeteccionAudio/entrenar_modelo.py
 ```
 - Subir código al Arduino: abrir `scriptArduino/sensoresIncendio.ino` en el Arduino IDE y cargar al dispositivo.
+- Puente MQTT (para conectar Arduino con AWS via Mosquitto):
+```bash
+python mqtt.py
+```
 
 7. Notas:
 - Para detección de imágenes con GPU, instala la versión de `torch` compatible con tu CUDA y reinicia.
@@ -181,7 +228,7 @@ Señal de riesgo detectada (por ejemplo, temperatura o luz fuera de rango). El s
 <br>
 🔊 [audio_incendio.wav](audio_incendio.wav)
 
-Cuando se detecta riesgo, el sistema guarda una fotografía (`confirmado.jpeg`) y graba un audio (`audio_incendio.wav`) para análisis posterior.
+Cuando se detecta riesgo, el sistema guarda una fotografía (`foto_incendio.jpeg`) y graba un audio (`audio_incendio.wav`) para análisis posterior.
 
 ### 3.4 Confirmación de Incendio
 
