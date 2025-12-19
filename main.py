@@ -33,6 +33,7 @@ evidencia_tomada = False
 PESO_IMAGEN = 0.7
 PESO_AUDIO = 0.3
 UMBRAL_ALERTA = 0.6
+alerta_enviada = False
 
 # ================== FUNCIONES ==================
 
@@ -136,10 +137,10 @@ def on_message(client, userdata, msg):
 
             if alerta_final:
                 estado_local = "Confirmado"
+                alerta_enviada = False 
                 print("INCENDIO CONFIRMADO")
             else:
                 print("Evidencia insuficiente, monitoreando...")
-
 
         # Verificar recuperación
         if not condicion_riesgo:
@@ -157,6 +158,7 @@ def on_message(client, userdata, msg):
     # ================== ESTADO CONFIRMADO ==================
     elif estado_local == "Confirmado":
         enviar_alerta_telegram(PHOTO_PATH)
+        alerta_enviada = True
 
 
     print(f"Estado local: {estado_local}")
