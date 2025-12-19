@@ -44,7 +44,30 @@
 
 ## 1. Acerca del Proyecto
 ### 1.1 Descripción General del Sistema
+
+El sistema de Detección de Incendios IoT es una plataforma avanzada diseñada para la detección temprana y automática de incendios en espacios monitoreados. Combina sensores IoT conectados a dispositivos Arduino que recopilan datos ambientales en tiempo real, como temperatura, lintensidad de luz otros indicadores de riesgo. Estos datos se procesan mediante algoritmos de inteligencia artificial especializados en visión por computadora (usando YOLOv8 para detección de fuego en imágenes) y análisis de audio. El sistema integra notificaciones instantáneas vía Telegram y almacena evidencias en la nube usando AWS S3, con procesamiento adicional posible mediante AWS Lambda. La arquitectura modular permite escalabilidad y facilidad de mantenimiento, ideal para aplicaciones en hogares, industrias o espacios públicos.
+
 ### 1.2 Arquitectura del Sistema
+
+La arquitectura del sistema se basa en una estructura distribuida y modular que integra hardware IoT, procesamiento en la nube y aplicaciones de usuario. Los componentes principales incluyen:
+
+- **Sensores y Hardware IoT**: Dispositivos Arduino MKR1010 WiFi equipados con sensores de temperatura, humo y otros, que envían datos vía MQTT a través de un broker local (Mosquitto) o directamente a AWS IoT Core.
+
+- **Puente MQTT**: Script `mqtt.py` que actúa como intermediario entre Mosquitto y AWS IoT Core, asegurando la transmisión segura de datos.
+
+- **Backend Principal**: Script `main.py` en Python que recibe los datos MQTT, coordina la detección de incendios mediante módulos especializados, y maneja el almacenamiento en AWS S3 y notificaciones.
+
+- **Módulos de Detección**:
+  - **Detección por Imagen**: Utiliza YOLOv8 para analizar imágenes capturadas y confirmar presencia de fuego.
+  - **Detección por Audio**: Emplea modelos de machine learning (RandomForest) entrenados con Librosa para procesar grabaciones de audio.
+
+- **Frontend y Visualización**: Dashboard web simple (`front-end/index.html`) para monitoreo en tiempo real, y una interfaz Streamlit (`DeteccionImagen/main.py`) para pruebas de detección por imagen.
+
+- **Notificaciones y Almacenamiento**: Integración con Telegram Bot API para alertas, y AWS S3 para guardar imágenes y videos de evidencia.
+
+- **Flujo de Datos**: Sensores → MQTT → Backend → Detección IA → Almacenamiento/Notificaciones.
+
+Esta arquitectura permite un sistema robusto, escalable y eficiente para la prevención de incendios.
 ### 1.3 Tecnologías Utilizadas
 
 - **Lenguaje**
