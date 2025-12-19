@@ -202,6 +202,26 @@ def enviar_audio(ruta_audio):
 
 
 # ════════════════════════════════════════════
+# FUNCIONES MQTT (ESTADO)
+# ════════════════════════════════════════════
+
+def publicar_estado_mqtt(temp, hum, luz):
+    payload = {
+        "estado": estado_local.lower(),  # normal / riesgo / confirmado
+        "temperatura": round(temp, 1),
+        "humedad": round(hum, 1),
+        "luminosidad": round(luz, 0),
+        "timestamp": int(time.time())
+    }
+
+    mqtt_connection.publish(
+        topic=f"{TOPIC_SENSORES}/estado",
+        payload=json.dumps(payload),
+        qos=mqtt.QoS.AT_LEAST_ONCE
+    )
+
+
+# ════════════════════════════════════════════
 # FUNCIONES AWS (OPCIONAL - PARA LAMBDA)
 # ════════════════════════════════════════════
 
@@ -392,6 +412,8 @@ def on_message_received(topic, payload, **kwargs):
             # if foto_s3 and audio_s3:
             #     invocar_lambda_analisis(foto_s3, audio_s3, evento_id)
     
+    publicar_estado_mqtt(temp, hum, luz)
+
     print(f"📍 Estado actual: {estado_local}")
     print("-" * 60)
 
