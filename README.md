@@ -241,3 +241,7 @@ Imagen anotada que confirma la presencia de fuego (cajas de detección, etiqueta
   <img src="images/mensaje_telegram.jpeg" width="400">
 
 Notificación enviada al usuario vía Telegram con foto y mensaje informando la detección confirmada.
+
+## 4. DEMO
+ Video : https://drive.google.com/drive/folders/1N0FNUiYDMdWXwOwTinsRN3Yaky4LE_wg?usp=sharing
+ 
