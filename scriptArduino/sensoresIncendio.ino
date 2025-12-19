@@ -22,7 +22,7 @@ int   luz_valida  = 0;
 
 void setup() {
   Serial.begin(9600);
-  delay(4000);
+  delay(2000);
 
   carrier.begin();
 
@@ -87,5 +87,5 @@ void loop() {
   mqttClient.print("}");
   mqttClient.endMessage();
 
-  delay(1000);
+  delay(4000);
 }
